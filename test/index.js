@@ -1,4 +1,4 @@
-var window = require("global/window")
+var window = global;
 var test = require("tape")
 var forEach = require("for-each")
 

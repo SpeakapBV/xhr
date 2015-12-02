@@ -1,15 +1,12 @@
 "use strict";
-var window = require("global/window")
-var once = require("once")
-var isFunction = require("is-function")
-var parseHeaders = require("parse-headers")
-var xtend = require("xtend")
+
+var _ = require("lodash")
 
 module.exports = createXHR
-createXHR.XMLHttpRequest = window.XMLHttpRequest || noop
+createXHR.XMLHttpRequest = window.XMLHttpRequest || _.noop
 createXHR.XDomainRequest = "withCredentials" in (new createXHR.XMLHttpRequest()) ? createXHR.XMLHttpRequest : window.XDomainRequest
 
-forEachArray(["get", "put", "post", "patch", "head", "delete"], function(method) {
+_.each(["get", "put", "post", "patch", "head", "delete"], function(method) {
     createXHR[method === "delete" ? "del" : method] = function(uri, options, callback) {
         options = initParams(uri, options, callback)
         options.method = method.toUpperCase()
@@ -17,29 +14,42 @@ forEachArray(["get", "put", "post", "patch", "head", "delete"], function(method)
     }
 })
 
-function forEachArray(array, iterator) {
-    for (var i = 0; i < array.length; i++) {
-        iterator(array[i])
-    }
-}
+function parseHeaders(headers) {
+  if (!headers)
+    return {}
 
-function isEmpty(obj){
-    for(var i in obj){
-        if(obj.hasOwnProperty(i)) return false
-    }
-    return true
+  var result = {}
+
+  _.each(
+      _.trim(headers).split('\n')
+    , function (row) {
+        var index = row.indexOf(':')
+          , key = _.trim(row.slice(0, index)).toLowerCase()
+          , value = _.trim(row.slice(index + 1))
+
+        if (typeof(result[key]) === 'undefined') {
+          result[key] = value
+        } else if (_.isArray(result[key])) {
+          result[key].push(value)
+        } else {
+          result[key] = [ result[key], value ]
+        }
+      }
+  )
+
+  return result
 }
 
 function initParams(uri, options, callback) {
     var params = uri
 
-    if (isFunction(options)) {
+    if (_.isFunction(options)) {
         callback = options
         if (typeof uri === "string") {
             params = {uri:uri}
         }
     } else {
-        params = xtend(options, {uri: uri})
+        params = _.extend(options, {uri: uri})
     }
 
     params.callback = callback
@@ -56,7 +66,7 @@ function _createXHR(options) {
     if(typeof callback === "undefined"){
         throw new Error("callback argument missing")
     }
-    callback = once(callback)
+    callback = _.once(callback)
 
     function readystatechange() {
         if (xhr.readyState === 4) {
@@ -195,7 +205,7 @@ function _createXHR(options) {
                 xhr.setRequestHeader(key, headers[key])
             }
         }
-    } else if (options.headers && !isEmpty(options.headers)) {
+    } else if (options.headers && !_.isEmpty(options.headers)) {
         throw new Error("Headers cannot be set on an XDomainRequest object")
     }
 
@@ -215,5 +225,3 @@ function _createXHR(options) {
 
 
 }
-
-function noop() {}

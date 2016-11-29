@@ -67,12 +67,6 @@ function _createXHR(options) {
     }
     var callback = _.once(options.callback)
 
-    function readystatechange() {
-        if (xhr.readyState === 4) {
-            loadFunc()
-        }
-    }
-
     function getBody() {
         // Chrome with requestType=blob throws errors arround when even testing access to responseText
         var body = undefined
@@ -170,7 +164,6 @@ function _createXHR(options) {
         }
     }
 
-    xhr.onreadystatechange = readystatechange
     xhr.onload = loadFunc
     xhr.onerror = errorFunc
     // IE9 must have onprogress be set to a unique function.
